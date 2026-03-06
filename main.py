@@ -719,3 +719,4 @@ else:
                 st.metric("Risk/Reward Ratio", f"{risk_reward:.2f}x")
         elif total_cost < 0:
             st.info(f"This is a **credit** strategy. You collect ${abs(total_cost):,.2f} upfront.")
+
