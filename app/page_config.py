@@ -247,5 +247,6 @@ def setup_page():
                 max-width: 100vw !important;
             }
         }
+
     </style>
     """, unsafe_allow_html=True)
