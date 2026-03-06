@@ -5,7 +5,7 @@ import pandas as pd
 from app.page_config import setup_page
 from app.pricing import black_scholes_price, calculate_greeks
 from app.strategies import STRATEGY_TEMPLATES, get_strategy_legs
-from app.charts import build_pnl_chart, build_greek_chart
+from app.charts import build_pnl_chart, build_greek_chart, CHART_BG, CHART_GRID, CHART_FONT
 from app.data import (
     TOP_TICKERS, get_stock_quote, get_options_expirations,
     get_options_chain, get_options_flow, get_put_call_ratio, format_number,
@@ -14,6 +14,24 @@ from app.pages.auth_page import render_auth_page, render_user_sidebar, _is_guest
 from app.pages.my_strategies import render_my_strategies_page, render_save_strategy_form
 from app.pages.my_trades import render_my_trades_page
 import plotly.graph_objects as go
+
+
+def _chart_layout(height=300, **kwargs):
+    layout = dict(
+        template="plotly_dark",
+        plot_bgcolor=CHART_BG,
+        paper_bgcolor=CHART_BG,
+        font=CHART_FONT,
+        height=height,
+        margin=dict(l=40, r=15, t=30, b=40),
+        autosize=True,
+        xaxis=dict(gridcolor=CHART_GRID, zerolinecolor="rgba(99,179,237,0.1)",
+                   tickfont=dict(family="JetBrains Mono", size=10)),
+        yaxis=dict(gridcolor=CHART_GRID, zerolinecolor="rgba(99,179,237,0.1)",
+                   tickfont=dict(family="JetBrains Mono", size=10)),
+    )
+    layout.update(kwargs)
+    return layout
 
 setup_page()
 
@@ -125,9 +143,9 @@ elif page == "Market Data":
     def color_change(val):
         if isinstance(val, (int, float)):
             if val > 0:
-                return "color: #00E676"
+                return "color: #22c55e"
             elif val < 0:
-                return "color: #FF5252"
+                return "color: #ef4444"
         return ""
 
     styled = display_df.style.map(color_change, subset=["Chg", "Chg%"])
@@ -259,24 +277,17 @@ elif page == "Options Chain":
                 if not calls.empty:
                     oi_fig.add_trace(go.Bar(
                         x=calls["strike"], y=calls["openInterest"],
-                        name="Call OI", marker_color="#00E676", opacity=0.7,
+                        name="Call OI", marker_color="#22c55e", opacity=0.7,
                     ))
                 if not puts.empty:
                     oi_fig.add_trace(go.Bar(
                         x=puts["strike"], y=puts["openInterest"],
-                        name="Put OI", marker_color="#FF5252", opacity=0.7,
+                        name="Put OI", marker_color="#ef4444", opacity=0.7,
                     ))
                 if spot:
                     oi_fig.add_vline(x=spot, line_dash="dot", line_color="white", opacity=0.5,
                                      annotation_text=f"${spot:.2f}")
-                oi_fig.update_layout(
-                    template="plotly_dark",
-                    plot_bgcolor="rgba(17,17,17,0.9)",
-                    paper_bgcolor="rgba(17,17,17,0.9)",
-                    barmode="group", height=300,
-                    margin=dict(l=40, r=15, t=30, b=40),
-                    autosize=True,
-                )
+                oi_fig.update_layout(**_chart_layout(barmode="group"))
                 st.plotly_chart(oi_fig, use_container_width=True)
 
                 st.markdown("##### IV Smile")
@@ -284,24 +295,16 @@ elif page == "Options Chain":
                 if not calls.empty:
                     iv_fig.add_trace(go.Scatter(
                         x=calls["strike"], y=calls["impliedVolatility"],
-                        name="Call IV", line=dict(color="#4ECDC4", width=2),
+                        name="Call IV", line=dict(color="#3b82f6", width=2),
                     ))
                 if not puts.empty:
                     iv_fig.add_trace(go.Scatter(
                         x=puts["strike"], y=puts["impliedVolatility"],
-                        name="Put IV", line=dict(color="#FF6B6B", width=2),
+                        name="Put IV", line=dict(color="#ef4444", width=2),
                     ))
                 if spot:
-                    iv_fig.add_vline(x=spot, line_dash="dot", line_color="white", opacity=0.5)
-                iv_fig.update_layout(
-                    template="plotly_dark",
-                    plot_bgcolor="rgba(17,17,17,0.9)",
-                    paper_bgcolor="rgba(17,17,17,0.9)",
-                    yaxis_title="IV (%)", xaxis_title="Strike ($)",
-                    height=300,
-                    margin=dict(l=40, r=15, t=30, b=40),
-                    autosize=True,
-                )
+                    iv_fig.add_vline(x=spot, line_dash="dot", line_color="rgba(255,255,255,0.2)", opacity=0.5)
+                iv_fig.update_layout(**_chart_layout(yaxis_title="IV (%)", xaxis_title="Strike ($)"))
                 st.plotly_chart(iv_fig, use_container_width=True)
 
 elif page == "Options Flow":
@@ -374,7 +377,7 @@ elif page == "Options Flow":
         filtered = filtered[filtered["Vol/OI"] >= vol_oi_min]
 
     def style_flow(row):
-        color = "#00E676" if row["Type"] == "CALL" else "#FF5252"
+        color = "#22c55e" if row["Type"] == "CALL" else "#ef4444"
         return [f"color: {color}"] * len(row)
 
     if not filtered.empty:
@@ -395,27 +398,20 @@ elif page == "Options Flow":
             call_agg = call_flow.groupby("Strike")["Volume"].sum().reset_index()
             vol_fig.add_trace(go.Bar(
                 x=call_agg["Strike"], y=call_agg["Volume"],
-                name="Call Volume", marker_color="#00E676", opacity=0.8,
+                name="Call Volume", marker_color="#22c55e", opacity=0.8,
             ))
         if not put_flow.empty:
             put_agg = put_flow.groupby("Strike")["Volume"].sum().reset_index()
             vol_fig.add_trace(go.Bar(
                 x=put_agg["Strike"], y=put_agg["Volume"],
-                name="Put Volume", marker_color="#FF5252", opacity=0.8,
+                name="Put Volume", marker_color="#ef4444", opacity=0.8,
             ))
 
         if quote:
             vol_fig.add_vline(x=quote["price"], line_dash="dot", line_color="white", opacity=0.5,
                               annotation_text=f"${quote['price']:.2f}")
 
-        vol_fig.update_layout(
-            template="plotly_dark",
-            plot_bgcolor="rgba(17,17,17,0.9)",
-            paper_bgcolor="rgba(17,17,17,0.9)",
-            barmode="group", height=300,
-            margin=dict(l=40, r=15, t=30, b=40),
-            autosize=True,
-        )
+        vol_fig.update_layout(**_chart_layout(barmode="group"))
         st.plotly_chart(vol_fig, use_container_width=True)
 
         st.markdown("##### Unusual Activity (High Vol/OI)")
@@ -568,7 +564,7 @@ else:
                         <small>@ ${leg.get('entry_price', spot_price):.2f}</small>
                     </div>""", unsafe_allow_html=True)
                 else:
-                    color = "#00E676" if leg["action"] == "buy" else "#FF5252"
+                    color = "#22c55e" if leg["action"] == "buy" else "#ef4444"
                     st.markdown(f"""<div class="leg-card">
                         <strong style="color:{color}">{'BUY' if leg['action'] == 'buy' else 'SELL'} {leg['qty']}x {leg['type'].upper()}</strong><br>
                         <small>Strike: ${leg['strike']:.2f} | Premium: ${leg['premium']:.2f}</small>
@@ -592,6 +588,42 @@ else:
                 total_cost += leg["premium"] * leg["qty"] * 100
             else:
                 total_cost -= leg["premium"] * leg["qty"] * 100
+
+    table_rows = ""
+    for leg in legs:
+        if leg["type"] == "stock":
+            tag = "tag-buy" if leg["action"] == "buy" else "tag-sell"
+            label = "BUY" if leg["action"] == "buy" else "SELL"
+            cost = leg.get("entry_price", leg["strike"]) * leg["qty"]
+            table_rows += f"""<tr>
+                <td><span class="{tag}">{label}</span></td>
+                <td>Stock</td>
+                <td>{leg['qty']} shares</td>
+                <td>${leg.get('entry_price', leg['strike']):.2f}</td>
+                <td>-</td>
+                <td>${cost:,.2f}</td>
+            </tr>"""
+        else:
+            tag = "tag-buy" if leg["action"] == "buy" else "tag-sell"
+            label = "BUY" if leg["action"] == "buy" else "SELL"
+            total = leg["premium"] * leg["qty"] * 100
+            dte_label = int(days_to_expiry * leg.get("dte_multiplier", 1.0))
+            table_rows += f"""<tr>
+                <td><span class="{tag}">{label}</span></td>
+                <td>{leg['type'].upper()}</td>
+                <td>{leg['qty']}x</td>
+                <td>${leg['strike']:.2f}</td>
+                <td>${leg['premium']:.2f}</td>
+                <td>${total:,.2f}</td>
+            </tr>"""
+
+    st.markdown(f"""<table class="summary-table">
+        <thead><tr>
+            <th>Action</th><th>Type</th><th>Qty</th><th>Strike</th><th>Premium</th><th>Total</th>
+        </tr></thead>
+        <tbody>{table_rows}</tbody>
+    </table>""", unsafe_allow_html=True)
+    st.markdown("")
 
     fig, breakevens, pnl_at_expiry = build_pnl_chart(
         legs, spot_price, risk_free_rate, implied_vol, days_to_expiry,

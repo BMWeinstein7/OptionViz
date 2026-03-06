@@ -59,7 +59,7 @@ def _render_open_trades(user):
                 pass
 
         pnl_class = "trade-profit" if current_pnl >= 0 else "trade-loss"
-        pnl_color = "#00E676" if current_pnl >= 0 else "#FF5252"
+        pnl_color = "#22c55e" if current_pnl >= 0 else "#ef4444"
 
         entry_date = trade["entry_date"]
         if isinstance(entry_date, str):
@@ -126,7 +126,7 @@ def _render_closed_trades(user):
     for trade in trades:
         realized = float(trade.get("realized_pnl") or 0)
         pnl_class = "trade-profit" if realized >= 0 else "trade-loss"
-        pnl_color = "#00E676" if realized >= 0 else "#FF5252"
+        pnl_color = "#22c55e" if realized >= 0 else "#ef4444"
 
         entry_date = trade["entry_date"]
         exit_date = trade.get("exit_date")
@@ -236,23 +236,29 @@ def _render_performance_summary(user):
         pnl_values = [float(t.get("realized_pnl") or 0) for t in closed]
         cumulative = np.cumsum(pnl_values)
 
+        chart_bg = "rgba(6, 11, 24, 0.95)"
+        chart_grid = "rgba(99, 179, 237, 0.06)"
+
         fig = go.Figure()
         fig.add_trace(go.Scatter(
             y=cumulative, mode="lines+markers",
-            line=dict(color="#667eea", width=2),
-            marker=dict(size=6),
+            line=dict(color="#3b82f6", width=2),
+            marker=dict(size=6, color="#3b82f6"),
             name="Cumulative P&L",
         ))
-        fig.add_hline(y=0, line_dash="dot", line_color="white", opacity=0.3)
+        fig.add_hline(y=0, line_dash="dot", line_color="rgba(136, 146, 164, 0.3)", line_width=1)
         fig.update_layout(
             template="plotly_dark",
-            plot_bgcolor="rgba(17,17,17,0.9)",
-            paper_bgcolor="rgba(17,17,17,0.9)",
+            plot_bgcolor=chart_bg,
+            paper_bgcolor=chart_bg,
+            font=dict(family="DM Sans, sans-serif", color="#8892a4"),
             yaxis_title="Cumulative P&L ($)",
             xaxis_title="Trade #",
             height=300,
             margin=dict(l=40, r=15, t=30, b=40),
             autosize=True,
+            xaxis=dict(gridcolor=chart_grid, tickfont=dict(family="JetBrains Mono", size=10)),
+            yaxis=dict(gridcolor=chart_grid, tickfont=dict(family="JetBrains Mono", size=10), tickprefix="$"),
         )
         st.plotly_chart(fig, use_container_width=True)
 

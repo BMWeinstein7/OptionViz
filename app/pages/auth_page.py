@@ -3,10 +3,10 @@ from app.auth import signup, login
 
 
 def render_auth_page():
-    _, center, _ = st.columns([1, 3, 1])
+    _, center, _ = st.columns([1, 2.5, 1])
     with center:
         st.markdown("""
-            <div style="text-align:center; margin-top:2rem; margin-bottom:0.5rem;">
+            <div style="text-align:center; margin-top:3rem; margin-bottom:0.5rem;">
                 <div class="auth-title">OptionViz</div>
                 <div class="auth-subtitle">Options Strategy Builder & Visualizer</div>
             </div>
@@ -62,7 +62,7 @@ def render_auth_page():
                             st.success("Account created!")
                             st.rerun()
 
-        st.markdown("---")
+        st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
         if st.button("Continue as Guest", use_container_width=True, key="guest_btn"):
             st.session_state.user = {
                 "id": None,

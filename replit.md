@@ -6,7 +6,8 @@ An options strategy builder and visualizer similar to OptionStrat. Built with St
 ## Features
 - **Strategy Templates**: 12 pre-built strategies (Long Call, Bull Call Spread, Iron Condor, Calendar Spread, etc.)
 - **Custom Builder**: Build custom multi-leg strategies with up to 8 legs
-- **P&L Charts**: Interactive Plotly charts showing P&L at expiry and intermediate dates
+- **Strategy Legs Summary Table**: HTML table showing Action, Type, Qty, Strike, Premium, Total for each leg with color-coded BUY/SELL tags
+- **P&L Charts**: Interactive Plotly charts with green profit zone / red loss zone gradient fills, at expiry and intermediate DTE curves
 - **Greeks**: Full Greeks calculation (Delta, Gamma, Theta, Vega, Rho)
 - **Greeks Charts**: Visual Greek sensitivity across stock prices
 - **Break-even Analysis**: Automatic break-even point detection
@@ -28,12 +29,12 @@ app/
   database.py            # PostgreSQL database operations (users, strategies, trades)
   pricing.py             # Black-Scholes pricing & Greeks calculations
   strategies.py          # Strategy templates and leg generation
-  charts.py              # Plotly chart generation (P&L, Greeks)
-  page_config.py         # Page setup and CSS styling
+  charts.py              # Plotly chart generation (P&L, Greeks) with centralized chart constants
+  page_config.py         # Page setup, CSS design system, Google Fonts
   data.py                # Live market data fetching (yfinance)
   pages/
     __init__.py
-    auth_page.py         # Login/signup/verification UI
+    auth_page.py         # Login/signup/verification UI with guest mode
     my_strategies.py     # Saved strategies list and save form
     my_trades.py         # Trade tracking, open/close trades, performance summary
 .streamlit/
@@ -46,7 +47,7 @@ app/
 - **trade_tracking**: id, strategy_id, user_id, ticker, entry/exit dates, entry/current/exit prices, entry_cost, current_value, realized_pnl, status, notes
 
 ## Pages
-1. **Strategy Builder** - Build and visualize options strategies with P&L charts (+ save strategy)
+1. **Strategy Builder** - Build and visualize options strategies with P&L charts, summary table, Greeks (+ save strategy)
 2. **Market Data** - Live quotes for top 100 tickers with search/filter
 3. **Options Chain** - Full chain viewer with OI charts and IV smile
 4. **Options Flow** - Volume scanner with unusual activity detection
@@ -61,6 +62,14 @@ app/
 - Guest users see "Sign in to save strategies and track trades" instead of save/trade forms
 - My Strategies and My Trades pages are hidden from guest navigation and guarded against direct access
 
+## Design System
+- **Typography**: DM Sans for UI text, JetBrains Mono for data/numbers (loaded via Google Fonts)
+- **Color Palette**: Deep navy backgrounds (#060b18, #0c1425, #111b2e), blue accent (#3b82f6), green (#22c55e), red (#ef4444), amber (#f59e0b), purple (#8b5cf6)
+- **Components**: Glassmorphism metric cards with backdrop-filter, gradient header text, color-coded sentiment badges, summary table with hover states
+- **Charts**: Consistent Plotly dark theme with centralized CHART_BG/CHART_GRID/CHART_FONT constants, P&L gradient fills (green profit / red loss zones)
+- **Accessibility**: focus-visible outlines, prefers-reduced-motion support, 44px minimum touch targets, WCAG contrast ratios
+- **Transitions**: 150ms fast / 250ms normal with cubic-bezier easing
+
 ## UI / Responsive Design
 - Mobile-first responsive CSS with media queries at 768px and 480px breakpoints
 - Sidebar starts collapsed by default for mobile-friendly initial experience
@@ -74,6 +83,7 @@ app/
 - Sidebar auto-collapses on navigation item selection via JS injection (components.html)
 - Font sizes use clamp() for fluid scaling across screen sizes
 - Viewport meta tag set for proper mobile rendering (no user zoom)
+- Summary table responsive with reduced padding/font on mobile
 
 ## Tech Stack
 - **Framework**: Streamlit
