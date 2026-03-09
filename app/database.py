@@ -1,14 +1,29 @@
 import os
 import json
 import psycopg2
+import psycopg2.pool
 from psycopg2.extras import RealDictCursor
 from contextlib import contextmanager
 from datetime import datetime
 
+_pool = None
+
+
+def _get_pool():
+    global _pool
+    if _pool is None or _pool.closed:
+        _pool = psycopg2.pool.ThreadedConnectionPool(
+            minconn=2,
+            maxconn=10,
+            dsn=os.environ["DATABASE_URL"],
+        )
+    return _pool
+
 
 @contextmanager
 def get_db():
-    conn = psycopg2.connect(os.environ["DATABASE_URL"])
+    pool = _get_pool()
+    conn = pool.getconn()
     try:
         yield conn
         conn.commit()
@@ -16,7 +31,72 @@ def get_db():
         conn.rollback()
         raise
     finally:
-        conn.close()
+        pool.putconn(conn)
+
+
+def init_db():
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id SERIAL PRIMARY KEY,
+                    email VARCHAR(255) UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    is_verified BOOLEAN DEFAULT FALSE,
+                    created_at TIMESTAMP DEFAULT NOW()
+                )
+            """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS saved_strategies (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                    name VARCHAR(255) NOT NULL,
+                    strategy_type VARCHAR(100),
+                    legs JSONB NOT NULL,
+                    spot_price NUMERIC(12,4),
+                    risk_free_rate NUMERIC(8,6),
+                    implied_vol NUMERIC(8,6),
+                    days_to_expiry INTEGER,
+                    ticker VARCHAR(20),
+                    notes TEXT,
+                    created_at TIMESTAMP DEFAULT NOW()
+                )
+            """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS trade_tracking (
+                    id SERIAL PRIMARY KEY,
+                    strategy_id INTEGER REFERENCES saved_strategies(id) ON DELETE SET NULL,
+                    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                    ticker VARCHAR(20),
+                    entry_date TIMESTAMP DEFAULT NOW(),
+                    exit_date TIMESTAMP,
+                    entry_spot_price NUMERIC(12,4),
+                    current_spot_price NUMERIC(12,4),
+                    exit_spot_price NUMERIC(12,4),
+                    entry_cost NUMERIC(14,2),
+                    current_value NUMERIC(14,2),
+                    realized_pnl NUMERIC(14,2),
+                    status VARCHAR(20) DEFAULT 'open',
+                    notes TEXT
+                )
+            """)
+
+            
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_saved_strategies_user_id ON saved_strategies (user_id)
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_trade_tracking_user_id ON trade_tracking (user_id)
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_trade_tracking_strategy_id ON trade_tracking (strategy_id)
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_trade_tracking_status ON trade_tracking (status)
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_trade_tracking_user_status ON trade_tracking (user_id, status)
+            """)
 
 
 def create_user(email, password_hash):
@@ -45,7 +125,6 @@ def get_user_by_id(user_id):
             cur.execute("SELECT id, email, is_verified, created_at FROM users WHERE id = %s", (user_id,))
             row = cur.fetchone()
             return dict(row) if row else None
-
 
 
 def save_strategy(user_id, name, strategy_type, legs, spot_price, risk_free_rate, implied_vol, days_to_expiry, ticker=None, notes=None):

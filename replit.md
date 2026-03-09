@@ -42,9 +42,13 @@ app/
 ```
 
 ## Database (PostgreSQL)
-- **users**: id, email, password_hash, is_verified, created_at
-- **saved_strategies**: id, user_id, name, strategy_type, legs (JSONB), spot_price, risk_free_rate, implied_vol, days_to_expiry, ticker, notes, created_at
-- **trade_tracking**: id, strategy_id, user_id, ticker, entry/exit dates, entry/current/exit prices, entry_cost, current_value, realized_pnl, status, notes
+- **Connection Pooling**: ThreadedConnectionPool (min=2, max=10) via psycopg2.pool — connections are reused instead of created/destroyed per request
+- **Schema Init**: `init_db()` creates tables + indexes on first session load (guarded by `st.session_state.db_initialized`)
+- **Tables**:
+  - **users**: id, email, password_hash, is_verified, created_at
+  - **saved_strategies**: id, user_id (FK→users), name, strategy_type, legs (JSONB), spot_price, risk_free_rate, implied_vol, days_to_expiry, ticker, notes, created_at
+  - **trade_tracking**: id, strategy_id (FK→saved_strategies), user_id (FK→users), ticker, entry/exit dates, entry/current/exit prices, entry_cost, current_value, realized_pnl, status, notes
+- **Indexes**: users(email), saved_strategies(user_id), trade_tracking(user_id), trade_tracking(strategy_id), trade_tracking(status), trade_tracking(user_id, status)
 
 ## Pages
 1. **Strategy Builder** - Build and visualize options strategies with P&L charts, summary table, Greeks (+ save strategy)
@@ -85,9 +89,15 @@ app/
 - Viewport meta tag set for proper mobile rendering (no user zoom)
 - Summary table responsive with reduced padding/font on mobile
 
+## SEO & Meta Tags
+- Open Graph tags (og:title, og:description, og:type) for social sharing
+- Meta description for search engines
+- Theme color meta tag (#060b18)
+- Robots meta tag (index, follow)
+
 ## Tech Stack
 - **Framework**: Streamlit
-- **Database**: PostgreSQL (psycopg2-binary)
+- **Database**: PostgreSQL (psycopg2-binary, psycopg2.pool for connection pooling)
 - **Auth**: bcrypt for password hashing
 - **Pricing Model**: Black-Scholes (scipy for normal distribution)
 - **Market Data**: yfinance (no API key required)

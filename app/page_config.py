@@ -9,11 +9,58 @@ def setup_page():
         initial_sidebar_state="collapsed"
     )
 
+    import streamlit.components.v1 as components
+    components.html("""
+    <script>
+    (function() {
+        var head = window.parent.document.head;
+        var metas = [
+            {name: "viewport", content: "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"},
+            {name: "description", content: "OptionViz - Options Strategy Builder & Visualizer. Build, analyze, and visualize options strategies with real-time market data, Black-Scholes pricing, and interactive P&L charts."},
+            {name: "theme-color", content: "#060b18"},
+            {name: "robots", content: "index, follow"}
+        ];
+        var ogMetas = [
+            {property: "og:title", content: "OptionViz - Options Strategy Visualizer"},
+            {property: "og:description", content: "Build and visualize options strategies with live market data, P&L diagrams, Greeks analysis, and trade tracking."},
+            {property: "og:type", content: "website"}
+        ];
+        metas.forEach(function(m) {
+            if (!head.querySelector('meta[name="' + m.name + '"]')) {
+                var el = document.createElement('meta');
+                el.name = m.name;
+                el.content = m.content;
+                head.appendChild(el);
+            }
+        });
+        ogMetas.forEach(function(m) {
+            if (!head.querySelector('meta[property="' + m.property + '"]')) {
+                var el = document.createElement('meta');
+                el.setAttribute('property', m.property);
+                el.content = m.content;
+                head.appendChild(el);
+            }
+        });
+        if (!head.querySelector('link[href*="fonts.googleapis.com/css2"]')) {
+            var pc1 = document.createElement('link');
+            pc1.rel = 'preconnect';
+            pc1.href = 'https://fonts.googleapis.com';
+            head.appendChild(pc1);
+            var pc2 = document.createElement('link');
+            pc2.rel = 'preconnect';
+            pc2.href = 'https://fonts.gstatic.com';
+            pc2.crossOrigin = '';
+            head.appendChild(pc2);
+            var fonts = document.createElement('link');
+            fonts.rel = 'stylesheet';
+            fonts.href = 'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap';
+            head.appendChild(fonts);
+        }
+    })();
+    </script>
+    """, height=0)
+
     st.markdown("""
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-primary: #060b18;

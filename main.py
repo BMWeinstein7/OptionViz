@@ -35,6 +35,11 @@ def _chart_layout(height=300, **kwargs):
 
 setup_page()
 
+if "db_initialized" not in st.session_state:
+    from app.database import init_db
+    init_db()
+    st.session_state.db_initialized = True
+
 if "user" not in st.session_state:
     render_auth_page()
     st.stop()
